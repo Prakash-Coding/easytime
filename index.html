@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EasyTime — Your Saved Website</title><style>body{font-family:Arial,sans-serif;background:#f6f5ed;color:#263129;max-width:700px;margin:70px auto;padding:25px}h1{font-size:46px;letter-spacing:-2px}p{line-height:1.7;color:#63675c}a{display:block;background:#6759eb;color:white;padding:18px;margin:15px 0;border-radius:7px;text-decoration:none}small{display:block;margin-top:7px;color:#e9e4ff}</style></head><body><h1>EasyTime</h1><p>Your timesheet and budgeting application, organized in one folder.</p><a href="Offline/calculator.html">Open the offline calculator<small>Track hours, estimate pay, save browser records, and export CSV.</small></a><a href="https://easytime-15-day.allup-pegasian.chatgpt.site" target="_blank" rel="noopener noreferrer">Open the hosted EasyTime application<small>Sign in to use account records, budgets, and the complete workspace.</small></a><p>The Full-Source folder contains the complete application code, including its server routes. See LOCAL-SETUP.txt for instructions.</p><a href="../index.html">Back to all websites</a>
+<script>
+  async function testBackendConnection() {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/health"
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      alert(data.status);
+    } catch (error) {
+      alert("Connection failed: " + error.message);
+    }
+  }
+</script>
+
+<button type="button" onclick="testBackendConnection()">
+  Test Backend Connection
+</button>
+</body></html>

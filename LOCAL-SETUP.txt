@@ -1,0 +1,24 @@
+EASYTIME: FULL APPLICATION SETUP
+===============================
+
+The offline calculator is ready to use through the included static server.
+To run EasyTime's account features locally, use the Full-Source folder instead.
+
+Required: Node.js 22.13.0 or later and pnpm 11.25.0.
+The exact dependency versions are preserved in pnpm-lock.yaml.
+
+Open a terminal in EasyTime/Full-Source, then run:
+    corepack enable
+    corepack prepare pnpm@11.25.0 --activate
+    pnpm install
+    pnpm dev
+
+Use the local URL printed by the development server (normally port 5173).
+Read README.md and public/easytime/README.md for account simulation, database
+bindings, and feature details. Clean source copies use the portable execution
+profile. ChatGPT sign-in is simulated only for local development. Live account
+records are not copied into this package. Email and Google sign-in require
+provider configuration.
+
+The exported hosting settings retain the DB binding but omit the existing
+hosted project identity. Opening this source does not publish or change a site.
