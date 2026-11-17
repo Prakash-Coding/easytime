@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Track weekly, 15-day, or monthly work, breaks, and overtime. Save records and download CSV timesheets."><title>EasyTime — Pay Cycle Records</title><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%229%22%20fill%3D%22%236654d9%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2210%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.3%22%2F%3E%3Cpath%20d%3D%22M16%2010v6l4%202%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E"><style>:root { --background:#f5f6fc; --foreground:#252542; --card:#fff; --card-foreground:#252542; --popover:#fff; --popover-foreground:#252542; --primary:#6654d9; --button-bg:#6759eb; --button-hover:#5748d6; --button-ink:#fff; --primary-foreground:#fff; --secondary:#efedfc; --secondary-foreground:#493b9b; --muted:#f3f3fa; --muted-foreground:#6b6c83; --accent:#efedfc; --accent-foreground:#493b9b; --destructive:#b23446; --border:#e6e6f2; --input:#e4e4ef; --ring:#6654d9; --radius:1rem; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--background); color:var(--foreground); font-family:"Segoe UI",Arial,Helvetica,sans-serif; font-size:1rem; -webkit-font-smoothing:antialiased; }
+button,input { font:inherit; -webkit-tap-highlight-color:transparent; }
+input:focus-visible,button:focus-visible { outline:3px solid #a99df5; outline-offset:3px; }
+.easytime { min-height:100vh; background:radial-gradient(ellipse at 0 35%,#eae8ff65,transparent 40%),radial-gradient(ellipse at 100% 10%,#e1f6ed70,transparent 30%),var(--background); }
+.site-header { background:#ffffffc9; border-bottom:1px solid #e7e7f0; }
+.header-inner { max-width:1200px; margin:auto; min-height:84px; padding:16px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.brand { display:flex; align-items:center; font-size:1.5rem; font-weight:750; letter-spacing:-.7px; }
+.brand>span:last-child { color:#6654d9; }
+.brand-icon { width:38px; height:38px; display:grid; place-items:center; margin-right:10px; border-radius:12px; background:#6654d9; color:#fff; box-shadow:0 4px 10px #6654d92b; }
+.brand-icon svg { width:22px; height:22px; }
+.header-note { display:flex; align-items:center; gap:8px; color:#6b6c83; font-size:.875rem; }
+.header-note svg { color:#298265; }
+.workspace { max-width:1200px; margin:0 auto; padding:38px 32px 22px; }
+.page-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:25px; }
+.eyebrow { font-size:.75rem; letter-spacing:1.6px; color:#73728e; font-weight:700; margin:0 0 9px; }
+h1 { font-size:clamp(1.7rem,3vw,2.25rem); letter-spacing:-1px; font-weight:720; line-height:1.25; margin:0; }
+h1>span { color:#6654d9; }
+.period-chip { display:flex; align-items:center; gap:9px; padding:11px 15px; color:#565270; background:#eeecfa; border:1px solid #e4e0f5; font-size:.875rem; border-radius:100px; }
+.period-chip svg { color:#7769bb; flex-shrink:0; }
+.panel { border:1px solid var(--border); background:var(--card); border-radius:20px; box-shadow:0 4px 18px #35376304; }
+.calculator { gap:22px; }
+.settings { display:grid; grid-template-columns:1fr 1.2fr 1.7fr; gap:28px; padding:23px 26px; align-items:start; }
+.settings-field,.mode-field { min-width:0; }
+.settings label,.field-label { display:block; font-size:.875rem; font-weight:600; color:#52516d; margin:0 0 9px; }
+.input-shell { display:flex; align-items:center; gap:10px; height:46px; border:1px solid #e4e4ef; border-radius:10px; padding:0 13px; background:#fcfcff; color:#86839b; }
+.input-shell:focus-within { border-color:#8d7de7; box-shadow:0 0 0 3px #6654d911; }
+.input-shell input { background:transparent; color:#302b4d; width:100%; min-width:0; font-weight:600; border:0; height:100%; outline:0; }
+.input-shell input:focus-visible { outline:0; }
+.input-unit { flex-shrink:0; font-size:.875rem; }
+.invalid { border-color:#c44757; }
+.field-error { margin:7px 0 0; font-size:.875rem; color:#af3041; }
+.mode-toggle { position:relative; display:grid; grid-template-columns:1fr 1fr; width:100%; height:46px!important; padding:4px; gap:2px; border-radius:11px; background:#f0eef9; isolation:isolate; }
+.mode-slider { z-index:-1; position:absolute; left:4px; top:4px; width:calc(50% - 4px); height:calc(100% - 8px); border-radius:8px; background:#fff; box-shadow:0 2px 6px #30295713; transition:transform .3s cubic-bezier(.2,.7,.2,1),background .3s; }
+.is-overtime .mode-slider { transform:translateX(100%); background:#fff9eb; }
+.mode-toggle [data-slot=tabs-trigger] { font-size:.875rem; height:100%; padding:8px; color:#6e6985; box-shadow:none!important; background:transparent!important; border:0; cursor:pointer; }
+.mode-toggle [data-state=active] { color:#5843c1; font-weight:700; }
+.is-overtime .mode-toggle [data-state=active] { color:#88600c; }
+.calculator-content { min-width:0; }
+.summary { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr); gap:16px; margin-bottom:24px; }
+.stat-card { padding:20px 22px; }
+.stat-label { display:flex; align-items:center; gap:9px; font-size:.875rem; font-weight:600; color:#69677f; }
+.stat-icon { display:grid; place-items:center; width:30px; height:30px; border-radius:9px; }
+.stat-icon.total { color:#6654d9; background:#efecff; }
+.stat-icon.regular { color:#268463; background:#eaf7f0; }
+.stat-icon.overtime { color:#a57412; background:#fff5dd; }
+.stat-number { display:flex; align-items:baseline; gap:8px; margin:13px 0 7px; font-size:2rem; font-weight:700; letter-spacing:-.8px; font-variant-numeric:tabular-nums; line-height:1.2; }
+.stat-number>span { font-size:.875rem; letter-spacing:0; font-weight:500; color:#8b879e; }
+.stat-caption { font-size:.8125rem; color:#77738c; margin:0; }
+.pay-card { border-radius:20px; padding:25px 24px 21px; background:linear-gradient(115deg,#5745bc,#7360dc); color:#fff; box-shadow:0 6px 20px #6654d923; }
+.pay-card .stat-label { color:#ede7ff; }
+.pay-number { margin:15px 0 7px; font-size:clamp(1.7rem,3vw,2.1rem); font-weight:700; letter-spacing:-.8px; font-variant-numeric:tabular-nums; line-height:1.2; overflow-wrap:anywhere; }
+.pay-caption { margin:0; font-size:.8125rem; color:#e5dffe; }
+.timesheet { overflow:hidden; }
+.sheet-heading { display:flex; align-items:center; justify-content:space-between; gap:26px; padding:25px 26px 21px; }
+h2 { font-size:1.125rem; font-weight:700; margin:0 0 6px; letter-spacing:-.25px; }
+.mode-description { color:#757188; font-size:.875rem; margin:0; animation:mode-in .3s ease; }
+@keyframes mode-in { from { opacity:.2; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+.progress-area { width:220px; flex-shrink:0; }
+.progress-label { display:flex; justify-content:space-between; font-size:.8125rem; color:#8a849e; margin-bottom:9px; }
+.progress-label>span:first-child { color:#625783; font-weight:600; }
+.sheet-progress { height:6px; background:#ebe8f7; }
+.sheet-progress [data-slot=progress-indicator] { background:#8f7bdf; transition:transform .4s ease; }
+.sheet-help { background:#fafaff; padding:12px 26px; border-top:1px solid #ededf5; border-bottom:1px solid #ededf5; display:flex; gap:8px; align-items:center; color:#827b98; font-size:.8125rem; }
+.sheet-help svg { color:#8a80ad; flex-shrink:0; }
+.mode-badge { margin-left:auto; font-size:.75rem; font-weight:700; letter-spacing:.5px; white-space:nowrap; color:#7d6bb1; }
+.is-overtime .mode-badge { color:#92701e; }
+.hours-table { table-layout:fixed; font-size:.875rem; }
+.hours-table th { font-size:.875rem; font-weight:600; color:#77718c; height:43px; background:#fff; padding:8px 10px; }
+.hours-table td { padding:11px 10px; }
+.hours-table th:first-child,.hours-table td:first-child { padding-left:26px; }
+.hours-table th:last-child,.hours-table td:last-child { padding-right:26px; }
+.hours-table .date-cell { width:175px; }
+.hours-table .hours-cell { width:112px; }
+.hours-table .split-cell { width:135px; }
+.hours-table .break-cell { width:120px; }
+.day-row { border-color:#efedf5; transition:background .25s; }
+.day-row:hover { background:#fdfcff; }
+.day-row.week-start:not(:first-child) { border-top:2px solid #e4def3; }
+.day-date { display:flex; align-items:center; gap:12px; }
+.day-index { width:29px; height:29px; display:grid; place-items:center; border-radius:8px; background:#f1eff9; color:#958cae; font-size:.75rem; font-weight:600; flex-shrink:0; }
+.is-complete .day-index { color:#6050b4; background:#ebe6fd; }
+.date-primary { display:block; font-weight:600; color:#555067; font-size:.875rem; }
+.date-secondary { display:block; margin-top:2px; color:#9690a4; font-size:.75rem; }
+.row-check { color:#2e9871; margin-left:auto; flex-shrink:0; }
+.entry-cell input { width:100%; min-width:0; height:40px; background:#fcfcfe; border:1px solid #e8e5ef; border-radius:8px; padding:7px 10px; color:#4a425f; font-size:.875rem; font-variant-numeric:tabular-nums; transition:border-color .15s,box-shadow .15s; }
+.entry-cell input:focus { background:#fff; border-color:#a291e7; }
+.entry-cell input::placeholder { color:#b3aec2; }
+.entry-cell input::-webkit-calendar-picker-indicator { opacity:.45; padding:0; margin:0; }
+.entry-cell input[type=number] { appearance:textfield; }
+.entry-cell input[type=number]::-webkit-inner-spin-button { appearance:none; }
+.time-control { display:grid; grid-template-columns:minmax(20px,1fr) 6px minmax(20px,1fr) minmax(40px,1.55fr); align-items:center; gap:2px; width:100%; min-width:0; height:40px; padding:0 5px; border:1px solid #e8e5ef; border-radius:8px; background:#fcfcfe; transition:border-color .15s,box-shadow .15s; }
+.time-control:focus-within { background:#fff; border-color:#a291e7; box-shadow:0 0 0 3px #6654d911; }
+.time-control .time-part { width:100%; min-width:0; height:32px; padding:3px 1px; border:0; border-radius:4px; background:transparent; font-size:.875rem; color:#4a425f; text-align:center; font-variant-numeric:tabular-nums; }
+.time-control select.time-part { cursor:pointer; padding-left:2px; text-align:left; }
+.time-control .time-part:focus { outline:2px solid #a99df5; outline-offset:-2px; background:#f3f0ff; box-shadow:none; }
+.time-colon { color:#9690a4; text-align:center; user-select:none; }
+.has-error .time-control { border-color:#ef92a2; }
+.entry-cell input[type=hidden] { display:none; }
+@media(max-width:900px){.time-control{height:44px}.time-control .time-part{height:36px}}
+@media(max-width:520px){.time-control .time-part{font-size:1rem}}
+.manual-cell input { background:#fffcf6; border-color:#eee2c5; animation:mode-in .25s ease; }
+.worked-value { font-weight:650; color:#635774; font-variant-numeric:tabular-nums; }
+.hours-unit { color:#9991a6; font-size:.75rem; font-weight:400; }
+.hours-pill { display:inline-block; font-size:.75rem; padding:5px 10px; border-radius:7px; color:#328266; background:#ecf7f1; font-weight:500; }
+.hours-pill.has-ot { color:#966b1d; background:#fff4db; }
+.empty-status { color:#b0aabd; padding-left:20px; }
+.overnight-label { display:block; font-size:.75rem; color:#897e9f; margin-top:3px; }
+.row-error { white-space:normal; color:#ac3545; font-size:.875rem; margin:5px 0 0; }
+.has-error input { border-color:#d8a5ac; }
+.mobile-label { display:none; }
+.sheet-footer { display:flex; gap:20px; justify-content:space-between; padding:18px 26px; background:#fbfaff; border-top:1px solid #efedf5; font-size:.8125rem; color:#968ca9; }
+.sheet-footer>span:first-child { display:flex; gap:9px; align-items:center; color:#76688e; }
+.sheet-footer svg { color:#a092c3; flex-shrink:0; }
+.validation-note { color:#ac3545; background:#fff1f3; padding:12px 18px; border-radius:10px; font-size:.875rem; margin:15px 0; }
+.bottom-notes { display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:space-between; color:#847b96; font-size:.8125rem; padding:6px 4px 0; }
+.bottom-notes p { margin:12px 0 0; }
+.bottom-notes p span { color:#b8afc8; padding:0 5px; }
+.site-footer { display:flex; justify-content:space-between; gap:20px; align-items:center; margin-top:34px; padding-top:19px; border-top:1px solid #e6e1f0; color:#a097ae; font-size:.75rem; }
+.mini-brand { display:flex; align-items:center; gap:6px; color:#8a7b9f; font-weight:600; }
+.site-footer p { margin:0; }
+@media (max-width:980px) { .settings { grid-template-columns:1fr 1.2fr; gap:20px; }.mode-field { grid-column:1/-1; }.mode-toggle { max-width:390px; }.summary { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }.hours-table .date-cell { width:145px; }.hours-table .hours-cell { width:85px; }.hours-table .split-cell { width:110px; }.hours-table th:first-child,.hours-table td:first-child { padding-left:16px; }.hours-table th:last-child,.hours-table td:last-child { padding-right:16px; }.entry-cell input { padding:7px; }.day-date { gap:8px; }.row-check { display:none; } }
+@media (max-width:900px) { .workspace { padding:28px 20px 20px; }.header-inner { padding:16px 20px; }.page-heading { align-items:flex-start; flex-direction:column; gap:17px; }.header-note { display:none; }.summary { gap:12px; }.stat-card,.pay-card { padding:19px; }.sheet-heading { padding:22px 20px; flex-direction:column; align-items:stretch; gap:17px; }.progress-area { width:100%; }.sheet-help { padding:12px 20px; }.mode-badge { display:none; }
+.hours-table { display:block; table-layout:auto; }.hours-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }.hours-table tbody { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:16px; background:#faf9fd; }.hours-table .day-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 10px; padding:16px; border:1px solid #e9e5f2!important; border-radius:13px; background:#fff; align-content:start; }.hours-table td { display:block; width:auto!important; padding:0!important; min-width:0; }.hours-table .date-cell { grid-column:1/-1; }.day-date { padding-bottom:11px; border-bottom:1px solid #efecf5; }.row-check { display:block; }.date-primary,.date-secondary { display:inline; }.date-secondary { margin-left:7px; }.mobile-label { display:block; font-size:.875rem; color:#8d839f; margin-bottom:6px; }.entry-cell input { font-size:.875rem; height:44px; padding:6px; }.hours-table .split-cell { grid-column:1/-1; }.split-cell:has(.empty-status) { display:none; }.hours-table .hours-cell { display:flex; flex-direction:column; justify-content:center; }.hours-unit { font-size:.8125rem; }.row-error { font-size:.875rem; }.empty-status { display:none; }.sheet-footer { padding:17px 20px; }.sheet-footer>span:last-child { display:none; } }
+@media (max-width:520px) { .workspace { padding:24px 16px 18px; }.header-inner { min-height:72px; padding:14px 16px; }.brand { font-size:1.375rem; }.brand-icon { width:34px; height:34px; border-radius:10px; }.page-heading { margin-bottom:21px; }h1 { font-size:1.75rem; }.settings { padding:19px; gap:17px; grid-template-columns:1fr; }.mode-field { grid-column:auto; }.mode-toggle { max-width:none; }.stat-label { font-size:.875rem; gap:7px; }.stat-icon { width:25px; height:25px; }.stat-card,.pay-card { padding:16px; border-radius:16px; }.stat-number { font-size:1.75rem; gap:5px; }.stat-number>span { font-size:.8125rem; }.pay-number { font-size:1.7rem; }.stat-caption,.pay-caption { font-size:.8125rem; line-height:1.5; }.summary { margin-bottom:20px; }.hours-table tbody { grid-template-columns:1fr; padding:12px; gap:12px; }.hours-table .day-row { grid-template-columns:repeat(2,minmax(0,1fr)); padding:17px; gap:14px 12px; }.entry-cell input { padding:8px 10px; font-size:1rem; }.hours-table .split-cell { grid-column:auto; align-self:center; }.hours-table .split-cell:has(.row-error) { grid-column:1/-1; }.date-primary { font-size:1rem; }.date-secondary { font-size:.875rem; }.day-index { font-size:.8125rem; }.worked-value { font-size:1rem; }.site-footer p { display:none; }.bottom-notes { gap:0; }.sheet-help { align-items:flex-start; }.sheet-help svg { margin-top:2px; } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+
+/* Keep controls readable with enlarged browser text. */
+.mode-toggle { height:auto!important; min-height:46px; }
+.mode-toggle [data-slot=tabs-trigger] { white-space:normal; height:auto; min-height:38px; }
+.stat-number { flex-wrap:wrap; overflow-wrap:anywhere; }
+.entry-cell input { height:auto; min-height:40px; line-height:1.4; }
+.hours-table tr { border-color:#efedf5; }
+@media(max-width:900px){.entry-cell input{min-height:44px;}}
+@media(max-width:360px){.mode-toggle [data-slot=tabs-trigger]{font-size:.8125rem;padding:8px 4px;gap:4px;}.mode-toggle svg{display:none;}}
+@media(max-width:360px){.hours-table .day-row{grid-template-columns:minmax(0,1fr);}.hours-table .date-cell{grid-column:auto;}}
+@media(max-width:520px){.summary{grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));}.hours-table .day-row{grid-template-columns:repeat(auto-fit,minmax(min(100%,6.5rem),1fr));}}
+
+.calculator{display:flex;flex-direction:column}.mode-toggle{align-items:stretch}.mode-toggle button{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;font-weight:500;line-height:1.4}.mode-toggle button[data-state=active]{font-weight:700}.mode-toggle button svg{flex-shrink:0}.hours-table{width:100%;border-collapse:collapse}.table-container{width:100%;overflow-x:auto}.hours-table tr{border-bottom:1px solid #efedf5}.hours-table th{text-align:left}.hours-table td{vertical-align:middle;white-space:nowrap}.easytime:not(.is-overtime) .manual-cell{display:none}.sheet-progress{position:relative;border-radius:100px;overflow:hidden}.sheet-progress [data-slot=progress-indicator]{width:100%;height:100%}.field-error:empty,.row-error:empty,.validation-note:empty{display:none}.mode-toggle button{border:0}.stat-label>svg{flex-shrink:0}.unit-label{font-weight:400;font-size:.8125rem}p{line-height:1.5}button{cursor:pointer}.brand-icon svg{stroke-width:2}.row-check{width:14px;height:14px}.split-cell .row-error{white-space:normal}input[aria-invalid=true]{border-color:#d8a5ac}svg{display:inline-block;vertical-align:middle}
+@media(max-width:900px){.hours-table td{white-space:normal}.table-container{overflow:visible}}
+.login-link{display:inline-flex;align-items:center;justify-content:center;padding:9px 17px;border:1px solid #d9d1f1;border-radius:10px;color:#5843b8;background:#f3efff;text-decoration:none;font-size:.875rem;font-weight:650}.login-link:focus-visible{outline:3px solid #a99df5;outline-offset:3px}.header-note{margin-left:auto}@media(max-width:760px){.header-note{display:none}}
+
+/* Save each pay period on this device. */
+.record-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 24px;margin-bottom:24px;flex-wrap:wrap}
+.record-toolbar h2{margin-bottom:4px}.record-hint{color:#77738c;font-size:.875rem;margin:0;max-width:37rem}
+.record-actions{display:flex;gap:10px;flex-wrap:wrap}.record-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 17px;min-height:44px;border:1px solid #ded7f0;border-radius:10px;background:#fff;color:#60518c;font-size:.875rem;font-weight:650;line-height:1.4}
+.record-button.primary{box-shadow:0 3px 9px #6759eb21}.record-button:disabled{opacity:.55;cursor:not-allowed}
+.record-button svg{flex-shrink:0}.export-hint{flex-basis:100%;margin:0;color:#827b98;font-size:.8125rem;line-height:1.6}
+.page-export{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:16px 20px;margin-bottom:24px;background:#edf8f2;border-color:#cce7da}.page-export p{margin:0;color:#366d57;font-size:.875rem;line-height:1.5}.page-export .record-button.export{flex-shrink:0}@media(max-width:520px){.page-export{padding:16px}.page-export .record-button{width:100%}}
+.record-status{flex-basis:100%;margin:0;color:#298265;font-size:.875rem;overflow-wrap:anywhere}.record-status:empty{display:none}.record-status.is-error{color:#ac3545}
+.saved-records{margin-top:24px;padding:22px 24px}.saved-records summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;font-weight:700;list-style:none;min-height:44px}.saved-records summary::-webkit-details-marker{display:none}.saved-records summary:focus-visible{outline:3px solid #a99df5;outline-offset:3px;border-radius:6px}
+.saved-count{display:inline-grid;place-items:center;padding:3px 9px;background:#efecff;color:#6654d9;border-radius:100px;margin-left:7px;font-size:.8125rem}.records-chevron{transition:transform .2s;flex-shrink:0}.saved-records[open] .records-chevron{transform:rotate(180deg)}
+.record-privacy{color:#827b98;font-size:.8125rem;margin:11px 0 18px;line-height:1.6}.saved-list{display:grid;gap:12px;padding:0;margin:0;list-style:none}.saved-empty{padding:20px;border:1px dashed #ddd6ef;border-radius:12px;color:#847b96;font-size:.875rem;line-height:1.6}
+.saved-item{display:flex;justify-content:space-between;gap:20px;align-items:center;border:1px solid #e8e2f2;border-radius:12px;padding:17px;background:#fcfbff;min-width:0}.saved-item h3{font-size:1rem;margin:0 0 7px;color:#514568;overflow-wrap:anywhere}.saved-item p{margin:0;color:#82778f;font-size:.8125rem;overflow-wrap:anywhere}.saved-item .record-summary{margin-bottom:6px;color:#675a7a}.saved-item-actions{display:flex;gap:8px;flex-shrink:0}
+@media(max-width:760px){.record-toolbar,.saved-records{padding:19px}.record-toolbar{gap:16px}.record-actions{width:100%}.record-actions .record-button{flex:1 1 10rem}.saved-item{flex-wrap:wrap;align-items:flex-start}.saved-item-actions{width:100%;flex-wrap:wrap}.saved-item-actions .record-button{flex:1 1 6rem}}
+@media(max-width:360px){.saved-records{padding:16px}.saved-item{padding:14px}}
+
+
+/* Four settings fit comfortably on desktop, with paired fields on tablets. */
+select{font:inherit;max-width:100%}.input-shell select{width:100%;min-width:0;height:100%;background:transparent;color:#302b4d;border:0;font-weight:600;cursor:pointer;outline:0}.input-shell select:focus-visible{outline:3px solid #a99df5;outline-offset:3px;border-radius:5px}.cycle-help{font-size:.75rem;color:#8a809c;line-height:1.5;margin:7px 0 0}.settings{grid-template-columns:minmax(0,.9fr) minmax(0,1.15fr) minmax(0,.95fr) minmax(0,1.6fr);gap:20px}.period-chip{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:1100px){.settings{grid-template-columns:repeat(2,minmax(0,1fr))}.mode-field{grid-column:auto}.mode-toggle{max-width:none}}
+@media(max-width:520px){.settings{grid-template-columns:minmax(0,1fr)}}
+
+.header-nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.header-nav a{font-size:.875rem;font-weight:600;color:#80768f;border-radius:9px;padding:10px 12px;text-decoration:none}.header-nav a:hover,.header-nav a[aria-current=page]{background:#efecfc;color:#604ac2}.header-nav a:focus-visible,.employee-actions a:focus-visible{outline:3px solid #a99df5;outline-offset:3px}.employee-strip{display:flex;gap:17px;align-items:center;flex-wrap:wrap;padding:21px 24px;margin-bottom:24px}.employee-avatar{width:49px;height:49px;flex-shrink:0;display:grid;place-items:center;border-radius:15px;background:#eee8fc;color:#7b61bb;font-size:1rem;font-weight:700}.employee-info{flex:1 1 18rem;min-width:0}.employee-eyebrow{font-size:.625rem;font-weight:700;color:#a08cb0;letter-spacing:1.2px;margin:0 0 4px}.employee-info h2{font-size:1rem;margin-bottom:3px;overflow-wrap:anywhere}.employee-info p:not(.employee-eyebrow){font-size:.8125rem;color:#9281a0;margin:0;line-height:1.6;overflow-wrap:anywhere}.employee-info .employee-help{margin-top:5px!important;font-size:.75rem!important}.employee-actions{display:flex;gap:8px;flex-wrap:wrap}.employee-actions .record-button{text-decoration:none}.employee-help.is-error{color:#ac3545!important}.record-employee{font-size:.8125rem;color:#7e638f!important;margin-bottom:5px!important;overflow-wrap:anywhere}
+@media(max-width:760px){.header-inner{flex-wrap:wrap;gap:12px}.header-nav{gap:3px}.employee-strip{padding:19px}.employee-actions{width:100%}.employee-actions .record-button{flex:1 1 9rem}}
+@media(max-width:520px){.header-nav{width:100%;justify-content:space-between}.header-nav a{font-size:.8125rem;padding:9px 8px}.employee-strip{gap:13px}.employee-info{flex-basis:calc(100% - 70px)}}
+
+/* Match the action buttons in the cloud workspace. */
+:is(.record-button,.login-link){background:var(--button-bg);border-color:var(--button-bg);color:var(--button-ink);transition:background-color .18s ease,border-color .18s ease}
+:is(.record-button,.login-link):hover:not(:disabled){background:var(--button-hover);border-color:var(--button-hover)}
+</style><link rel="stylesheet" href="workforce-design.css?v=20261117"></head><body><div class="easytime" id="easytime"><header class="site-header"><div class="header-inner"><div class="brand"><span class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock3 lucide-clock-3" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6h4"></path></svg></span>Easy<span>Time</span></div><div class="header-note"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-leaf" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg><span>A little clarity for your workday</span></div><nav class="header-nav" aria-label="EasyTime pages"><a href="index.html" aria-current="page">Timesheet</a><a href="profile.html">Employee profile</a><a href="login.html">Sign in</a></nav></div></header><main class="workspace"><div class="page-heading"><div><p class="eyebrow" id="cycle-eyebrow">YOUR 15-DAY TIMESHEET</p><h1>Your time, made easy<span>.</span></h1></div><div class="period-chip"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-days" aria-hidden="true"><path d="M8 2v3"></path><path d="M16 2v3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path><path d="M8 13h.01"></path><path d="M12 13h.01"></path><path d="M16 13h.01"></path><path d="M8 17h.01"></path><path d="M12 17h.01"></path><path d="M16 17h.01"></path></svg><span id="period-label">Choose your pay period</span></div></div>
+<section class="page-export panel" aria-label="Download your timesheet"><p>Take your timesheet with you. Download a CSV for Excel or Google Sheets.</p><button class="record-button export" id="download-csv-top" type="button" aria-describedby="export-help"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download CSV</button></section>
+<section class="employee-strip panel" aria-labelledby="employee-name">
+  <div class="employee-avatar" id="employee-avatar" aria-hidden="true">ET</div>
+  <div class="employee-info"><p class="employee-eyebrow">EMPLOYEE ON THIS TIMESHEET</p><h2 id="employee-name">Create your employee profile</h2><p id="employee-meta">Keep your name and pay preferences together.</p><p class="employee-help" id="employee-help">Save a profile to connect it to your timesheets.</p></div>
+  <div class="employee-actions"><a class="record-button" id="employee-edit" href="profile.html">Create profile</a><button class="record-button" id="use-profile" type="button" disabled>Use profile defaults</button></div>
+</section>
+<div class="calculator"><section class="settings panel" aria-label="Timesheet settings"><div class="settings-field"><label for="hourly-rate">Hourly rate</label><div class="input-shell" id="rate-shell"><span aria-hidden="true">$</span><input id="hourly-rate" type="number" min="0" step="0.01" inputmode="decimal" value="20"><span class="input-unit">/ hour</span></div><p id="rate-error" class="field-error"></p></div><div class="settings-field"><label id="period-start-label" for="period-start">Pay period starts</label><div class="input-shell"><input id="period-start" type="date" min="0001-01-01" max="9999-12-17"><input id="period-month" type="month" min="0001-01" max="9999-12" hidden></div><p id="date-error" class="field-error"></p></div><div class="settings-field cycle-field"><label for="cycle-days">Pay cycle</label><div class="input-shell"><select id="cycle-days" aria-describedby="cycle-help"><option value="7">7 days</option><option value="15" selected>15 days</option><option value="month">Month cycle</option><option id="legacy-cycle" value="30" hidden disabled>Saved 30-day cycle</option></select></div><p class="cycle-help" id="cycle-help">Consecutive days, starting on your chosen date.</p></div><div class="mode-field"><p class="field-label">Calculation mode</p><div class="mode-toggle" role="tablist" aria-label="Calculation mode"><span class="mode-slider" aria-hidden="true"></span><button type="button" id="normal-mode" role="tab" data-slot="tabs-trigger" data-state="active" aria-selected="true" aria-controls="calculator-content" data-mode="normal"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock3 lucide-clock-3" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6h4"></path></svg>Normal Mode</button><button type="button" id="overtime-mode" role="tab" data-slot="tabs-trigger" data-state="inactive" aria-selected="false" aria-controls="calculator-content" tabindex="-1" data-mode="overtime"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap" aria-hidden="true"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"></path></svg>Overtime Mode</button></div></div></section><div id="calculator-content" class="calculator-content" role="tabpanel" aria-labelledby="normal-mode"><section class="summary" aria-label="Period totals" aria-live="polite" aria-atomic="true"><article class="stat-card panel"><div class="stat-label"><span class="stat-icon total"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock3 lucide-clock-3" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6h4"></path></svg></span>Total worked</div><p class="stat-number"><span id="total-hours" style="font:inherit;letter-spacing:inherit;color:inherit">0.00</span><span>hrs</span></p><p class="stat-caption" id="total-hours-caption">After your breaks</p></article><article class="stat-card panel"><div class="stat-label"><span class="stat-icon regular"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>Regular hours</div><p class="stat-number"><span id="regular-hours" style="font:inherit;letter-spacing:inherit;color:inherit">0.00</span><span>hrs</span></p><p class="stat-caption" id="regular-hours-caption">At $20.00 / hour</p></article><article class="stat-card panel"><div class="stat-label"><span class="stat-icon overtime"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap" aria-hidden="true"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"></path></svg></span>Overtime hours</div><p class="stat-number"><span id="overtime-hours" style="font:inherit;letter-spacing:inherit;color:inherit">0.00</span><span>hrs</span></p><p class="stat-caption" id="overtime-hours-caption">Enable Overtime Mode to apply</p></article><article class="pay-card"><div class="stat-label"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dollar-sign" aria-hidden="true"><line x1="12" x2="12" y1="2" y2="22"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Estimated pay</div><p class="pay-number" id="estimated-pay">$0.00</p><p class="pay-caption">Gross pay · before deductions</p></article></section>
+<section class="record-toolbar panel" aria-labelledby="record-heading">
+  <div><h2 id="record-heading">Keep your pay-cycle record</h2><p class="record-hint" id="record-hint">Save this period, then start a fresh timesheet. Your saved records stay below.</p></div>
+  <div class="record-actions"><button class="record-button primary" id="save-record" type="button"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h9"/></svg><span id="save-record-label">Save record</span></button><button class="record-button export" id="download-csv" type="button" aria-describedby="export-help"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download CSV</button><button class="record-button" id="new-period" type="button">New 15-day period</button></div>
+  <p class="export-hint" id="export-help">Open your downloaded CSV in Excel or Google Sheets. To export an older period, open its saved record first.</p>
+  <p class="record-status" id="record-status" role="status" aria-live="polite" aria-atomic="true"></p>
+</section>
+<section class="timesheet panel" aria-labelledby="daily-heading"><div class="sheet-heading"><div><h2 id="daily-heading">Daily hours</h2><p id="calculation-help" class="mode-description">All worked hours are paid at your regular hourly rate.</p></div><div class="progress-area"><div class="progress-label"><span id="progress-text">0 of 15 days</span><span id="progress-percent">0%</span></div><div role="progressbar" aria-label="Days with complete shifts" aria-valuemin="0" aria-valuemax="15" aria-valuenow="0" class="sheet-progress" id="progress"><div data-slot="progress-indicator" id="progress-fill" style="transform:translateX(-100%)"></div></div></div></div><div class="sheet-help"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-coffee" aria-hidden="true"><path d="M10 2v2"></path><path d="M14 2v2"></path><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"></path><path d="M6 2v2"></path></svg><span id="sheet-help-text">Breaks are optional, in minutes. Overnight shifts are supported.</span><span class="mode-badge" id="mode-badge">REGULAR PAY</span></div><div class="table-container"><table class="hours-table" aria-describedby="calculation-help"><thead><tr><th class="date-cell" scope="col">Day</th><th scope="col">Start</th><th scope="col">End</th><th scope="col">Break <span class="unit-label">(min)</span></th><th class="manual-cell" scope="col">Manual OT <span class="unit-label">(hrs)</span></th><th class="hours-cell" scope="col">Worked</th><th class="split-cell" scope="col">Overtime</th></tr></thead><tbody id="timesheet-body"></tbody></table></div><div class="sheet-footer"><span><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles" aria-hidden="true"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg><span id="encouragement">One day at a time. Add your first shift to begin.</span></span><span id="cycle-footer">15 days · 1 clear picture</span></div></section><p class="validation-note" id="validation-note" role="status"></p><div class="bottom-notes"><p>Regular pay <span id="regular-pay">$0.00</span> <span>+</span> overtime pay <span id="overtime-pay">$0.00</span></p><p id="week-block-note">7-day blocks: days 1–7, 8–14, and 15.</p></div><p class="validation-note" id="storage-note"></p></div></div>
+<details class="saved-records panel" id="saved-records" open>
+  <summary><span>Saved records <span class="saved-count" id="saved-count">0</span></span><svg class="records-chevron" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></summary>
+  <p class="record-privacy">Saved in this browser on this device. Records remain after reopening the page. Clearing browser data removes them; they do not sync between devices.</p>
+  <ul class="saved-list" id="saved-list" aria-label="Saved pay-cycle timesheets"></ul>
+</details>
+<footer class="site-footer"><div class="mini-brand"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock3 lucide-clock-3" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6h4"></path></svg>EasyTime</div><p>Hours that add up. A workday that feels lighter.</p></footer><noscript><p class="validation-note">Enable JavaScript to calculate your hours and pay.</p></noscript></main></div><script>
+'use strict';
+let DAYS = 15, cycle = 15;
+const CYCLE_OPTIONS = [7,15,'month',30];
+const emptyEntries = (count = DAYS) => Array.from({ length: count }, () => ({ start: "", end: "", breakMinutes: "", manualOT: "" }));
+function timeMinutes(value) {
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value))
+        return null;
+    const [hours, minutes] = value.split(":").map(Number);
+    return hours * 60 + minutes;
+}
+function calculateSheet(entries, mode, rate) {
+    let weeklyMinutes = 0;
+    const rows = entries.map((entry, index) => {
+        if (index % 7 === 0)
+            weeklyMinutes = 0;
+        const errors = [];
+        const hasInput = !!(entry.start || entry.end || entry.breakMinutes || (mode === "overtime" && entry.manualOT));
+        const start = timeMinutes(entry.start), end = timeMinutes(entry.end);
+        if (hasInput && (start === null || end === null))
+            errors.push("Enter both start and end times.");
+        const duration = start !== null && end !== null ? (end < start ? end + 1440 : end) - start : 0;
+        if (start !== null && end !== null && duration === 0)
+            errors.push("Start and end must be different.");
+        const breakMinutes = entry.breakMinutes === "" ? 0 : Number(entry.breakMinutes);
+        if (!Number.isFinite(breakMinutes) || breakMinutes < 0 || !Number.isInteger(breakMinutes))
+            errors.push("Break must be a whole number of minutes, 0 or more.");
+        else if (start !== null && end !== null && breakMinutes > duration)
+            errors.push("Break cannot be longer than the shift.");
+        let net = Math.max(0, duration - breakMinutes);
+        const manualMinutes = entry.manualOT === "" ? 0 : Number(entry.manualOT) * 60;
+        if (mode === "overtime") {
+            if (!Number.isFinite(manualMinutes) || manualMinutes < 0)
+                errors.push("Manual OT must be 0 hours or more.");
+            else if (start !== null && end !== null && manualMinutes > net + 0.000001)
+                errors.push("Manual OT cannot exceed worked hours.");
+        }
+        const complete = start !== null && end !== null && errors.length === 0;
+        if (!complete)
+            net = 0;
+        const automaticOT = Math.min(net, Math.max(0, weeklyMinutes + net - 2400));
+        const overtime = complete && mode === "overtime" ? (entry.manualOT === "" ? automaticOT : manualMinutes) : 0;
+        weeklyMinutes += net;
+        return { minutes: net, regular: net - overtime, overtime, complete, overnight: complete && end < start, errors };
+    });
+    const regular = rows.reduce((sum, row) => sum + row.regular, 0) / 60;
+    const overtime = rows.reduce((sum, row) => sum + row.overtime, 0) / 60;
+    const hourlyRate = Number(rate);
+    const rateValid = rate.trim() !== "" && Number.isFinite(hourlyRate) && hourlyRate >= 0;
+    const regularPay = rateValid ? regular * hourlyRate : 0, overtimePay = rateValid ? overtime * hourlyRate * 1.5 : 0;
+    return { rows, regular, overtime, total: regular + overtime, regularPay, overtimePay, pay: regularPay + overtimePay, rateValid, completed: rows.filter(row => row.complete).length, invalidDays: rows.filter(row => row.errors.length).length };
+}
+function validDate(value, periodDays = DAYS) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < "0001-01-01" || value > "9999-12-31" || !Number.isInteger(periodDays) || periodDays < 1)
+        return false;
+    const date = new Date(value + "T12:00:00Z");
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0,10) === value && date.getTime() + (periodDays-1)*86400000 <= Date.UTC(9999,11,31,12);
+}
+function dayDate(start, index) {
+    if (!validDate(start,1) || !Number.isInteger(index)) return null;
+    const date = new Date(start + "T12:00:00Z");
+    date.setUTCDate(date.getUTCDate() + index);
+    return date.getUTCFullYear() >= 1 && date.getUTCFullYear() <= 9999 ? date : null;
+}
+function monthStart(value) { return validDate(value,1)?value.slice(0,7)+'-01':''; }
+function daysInMonth(value) {
+  const start=monthStart(value);if(!start)return 30;
+  const date=new Date(start+'T12:00:00Z');date.setUTCMonth(date.getUTCMonth()+1);date.setUTCDate(0);
+  return date.getUTCDate();
+}
+function preferredCycle(value) { return value===30?'month':value; }
+function cycleDescription(value) { return value==='month'?'Month cycle':value===30?'Saved 30-day cycle':value+'-day cycle'; }
+
+const $ = id => document.getElementById(id);
+const money = value => new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'}).format(value);
+const dateFormat = (date, options) => date ? new Intl.DateTimeFormat('en-US',{...options,timeZone:'UTC'}).format(date) : '—';
+let mode = 'normal';
+try { const saved = localStorage.getItem('easytimeMode'); if(saved === 'normal' || saved === 'overtime') mode = saved; } catch { $('storage-note').textContent = 'Your browser could not save the mode preference. The calculator still works.'; }
+try { const raw=localStorage.getItem('easytimeCycleDays'),savedCycle=raw==='month'||raw==='30'?'month':Number(raw);if(CYCLE_OPTIONS.includes(savedCycle))cycle=savedCycle; } catch {}
+$('cycle-days').value=String(cycle);
+const today = new Date();
+$('period-start').value = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+if(cycle==='month')$('period-start').value=monthStart($('period-start').value);
+DAYS=cycle==='month'?daysInMonth($('period-start').value):cycle;
+const checkIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-check row-check\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"></path></svg>";
+const fields = [['start','Start','time','60'],['end','End','time','60'],['breakMinutes','Break (min)','number','1'],['manualOT','Manual OT (hrs)','number','0.01']];
+function timeControlMarkup(id,label) {
+  const common=' class="time-part" data-time-id="'+id+'" autocomplete="off" aria-describedby="sheet-help-text"';
+  return '<div class="time-control" data-time-group data-time-id="'+id+'" role="group" aria-label="'+label+'">'+
+    '<input id="'+id+'-hours" data-time-part="hours"'+common+' type="text" inputmode="numeric" maxlength="2" pattern="(?:0?[1-9]|1[0-2])" placeholder="hh" aria-label="'+label+' hours">'+
+    '<span class="time-colon" aria-hidden="true">:</span>'+
+    '<input id="'+id+'-minutes" data-time-part="minutes"'+common+' type="text" inputmode="numeric" maxlength="2" pattern="[0-5]?[0-9]" placeholder="mm" aria-label="'+label+' minutes">'+
+    '<select id="'+id+'-meridiem" data-time-part="meridiem"'+common+' aria-label="'+label+' AM or PM"><option value="">—</option><option value="AM">AM</option><option value="PM">PM</option></select></div>'+
+    '<input id="'+id+'" data-field="'+id.split('-').pop()+'" type="hidden">';
+}
+let rows=[];
+function renderRows(entries=emptyEntries()) {
+$('timesheet-body').replaceChildren();
+for(let index=0;index<DAYS;index++) {
+  const day=index+1, row=document.createElement('tr'); row.dataset.day=String(day); row.className='day-row';
+  let cells='<td class="date-cell"><div class="day-date"><span class="day-index">'+String(day).padStart(2,'0')+'</span><div><span class="date-primary"></span><span class="date-secondary"></span></div><span class="check-holder"></span></div></td>';
+  for(const [field,label,type,step] of fields) {
+    const isBreak=field==='breakMinutes', isManual=field==='manualOT';
+    const accessible = 'Day '+day+' '+(isBreak?'break minutes':isManual?'manual overtime hours':field);
+    const id='day-'+day+'-'+field;
+    cells+='<td class="entry-cell '+(isBreak?'break-cell':isManual?'manual-cell':'')+'"><label class="mobile-label" for="'+id+(type==='time'?'-hours':'')+'">'+label+'</label>'+(type==='time'?timeControlMarkup(id,accessible):'<input id="'+id+'" data-field="'+field+'" aria-label="'+accessible+'" type="number" step="'+step+'" min="0" inputmode="'+(isManual?'decimal':'numeric')+'" placeholder="'+(isManual?'Auto':'—')+'">')+'</td>';
+  }
+  cells+='<td class="hours-cell"><span class="mobile-label">Worked</span><span class="worked-value">—<span class="hours-unit"> hrs</span></span><span class="overnight-label"></span></td><td class="split-cell"><span class="result-pill empty-status">—</span><p class="row-error" id="day-'+day+'-error"></p></td>';
+  row.innerHTML=cells; $('timesheet-body').appendChild(row);
+}
+rows=Array.from($('timesheet-body').rows);
+fillEntries(Array.from({length:DAYS},(_,index)=>entries[index] ?? emptyEntries(1)[0]));
+}
+
+function readEntries() { return rows.map(row=>Object.fromEntries(fields.map(([field])=>[field,row.querySelector('[data-field="'+field+'"]').value]))); }
+function calculate() {
+  const result=calculateSheet(readEntries(),mode,$('hourly-rate').value);
+  const startDate=$('period-start').value, first=dayDate(startDate,0), last=dayDate(startDate,DAYS-1);
+  updateCycleLabels();
+  $('period-label').textContent=validDate(startDate)?dateFormat(first,{month:'short',day:'numeric'})+' – '+dateFormat(last,{month:'short',day:'numeric',year:'numeric'}):'Choose your pay period';
+  $('date-error').textContent=validDate(startDate)?'':cycle==='month'?'Choose a valid month.':'Choose a valid start date.';
+  $('period-start').setAttribute('aria-invalid',String(cycle!=='month'&&!validDate(startDate)));
+  $('period-month').setAttribute('aria-invalid',String(cycle==='month'&&!validDate(startDate)));
+  $('period-start').setAttribute('aria-describedby','date-error');
+  $('period-month').setAttribute('aria-describedby','date-error');
+  $('rate-error').textContent=result.rateValid?'':'Enter a rate of $0 or more.';
+  $('hourly-rate').setAttribute('aria-invalid',String(!result.rateValid));
+  $('hourly-rate').setAttribute('aria-describedby','rate-error');
+  $('rate-shell').classList.toggle('invalid',!result.rateValid);
+  $('total-hours').textContent=result.total.toFixed(2); $('regular-hours').textContent=result.regular.toFixed(2); $('overtime-hours').textContent=result.overtime.toFixed(2);
+  $('regular-hours-caption').textContent='At '+(result.rateValid?money(Number($('hourly-rate').value)):'—')+' / hour';
+  $('estimated-pay').textContent=result.rateValid?money(result.pay):'—';
+  $('regular-pay').textContent=result.rateValid?money(result.regularPay):'—'; $('overtime-pay').textContent=result.rateValid?money(result.overtimePay):'—';
+  $('progress-text').textContent=result.completed+' of '+DAYS+' days'; $('progress-percent').textContent=Math.round(result.completed/DAYS*100)+'%';
+  $('progress-fill').style.transform='translateX(-'+(100-result.completed/DAYS*100)+'%)'; $('progress').setAttribute('aria-valuenow',String(result.completed)); $('progress').setAttribute('aria-valuemax',String(DAYS));
+  rows.forEach((row,index)=>{
+    const info=result.rows[index], date=dayDate(startDate,index);
+    row.classList.toggle('week-start',index%7===0); row.classList.toggle('is-complete',info.complete); row.classList.toggle('has-error',info.errors.length>0);
+    row.querySelector('.date-primary').textContent=date?dateFormat(date,{weekday:'short'}):'Day '+(index+1);
+    row.querySelector('.date-secondary').textContent=dateFormat(date,{month:'short',day:'numeric'});
+    row.querySelector('.check-holder').innerHTML=info.complete?checkIcon:'';
+    row.querySelector('.worked-value').firstChild.nodeValue=info.complete?(info.minutes/60).toFixed(2):'—';
+    row.querySelector('.overnight-label').textContent=info.overnight?'Overnight':'';
+    const pill=row.querySelector('.result-pill');
+    pill.className='result-pill '+(info.complete?'hours-pill '+(info.overtime>0?'has-ot':''):'empty-status');
+    pill.textContent=info.complete?(info.overtime>0?(info.overtime/60).toFixed(2)+' OT':'Regular'):'—';
+    row.querySelector('.row-error').textContent=info.errors.join(' ');
+    row.querySelectorAll('input:not([type="hidden"]),select').forEach(input=>{input.setAttribute('aria-invalid',String(info.errors.length>0));const help=input.dataset.timeId?'sheet-help-text':'';const descriptions=[help,info.errors.length?'day-'+(index+1)+'-error':''].filter(Boolean).join(' ');if(descriptions)input.setAttribute('aria-describedby',descriptions);else input.removeAttribute('aria-describedby');});
+  });
+  $('encouragement').textContent=result.completed===DAYS?'All '+DAYS+' days are in. Nice work!':result.completed===0?'One day at a time. Add your first shift to begin.':result.completed+" days logged. You're making progress.";
+  $('validation-note').textContent=result.invalidDays?result.invalidDays+' '+(result.invalidDays===1?'day needs':'days need')+' attention and '+(result.invalidDays===1?'is':'are')+' excluded from totals.':'';
+  return result;
+}
+function setMode(next, save=true) {
+  if(next!=='normal' && next!=='overtime')return;
+  mode=next; $('easytime').classList.toggle('is-overtime',mode==='overtime');
+  for(const value of ['normal','overtime']) { const button=$(value+'-mode'); button.setAttribute('aria-selected',String(mode===value));button.dataset.state=mode===value?'active':'inactive';button.tabIndex=mode===value?0:-1; }
+  $('calculator-content').setAttribute('aria-labelledby',mode+'-mode');
+  $('calculation-help').textContent=mode==='normal'?'All worked hours are paid at your regular hourly rate.':'Overtime starts after 40 hours in each 7-day block, at 1.5×.';
+  $('sheet-help-text').textContent='Enter hours, minutes, then choose AM/PM (A or P). Start moves to End; End moves to Break. '+(mode==='normal'?'Breaks are optional, in minutes. Overnight shifts are supported.':"Leave Manual OT blank for automatic overtime. A number replaces that day's OT; it is part of worked hours.");
+  $('mode-badge').textContent=mode==='normal'?'REGULAR PAY':'OVERTIME ENABLED';
+  $('overtime-hours-caption').textContent=mode==='normal'?'Enable Overtime Mode to apply':'At 1.5× your hourly rate';
+  if(save){ try {localStorage.setItem('easytimeMode',mode);} catch {$('storage-note').textContent='Your browser could not save the mode preference. The calculator still works.';} }
+  calculate();
+}
+
+const PROFILE_KEY='easytimeEmployeeProfileV1';
+const TEXT_LIMITS={fullName:100,employeeId:40,email:254,phone:30,company:100,jobTitle:100,department:100};
+    const TYPE_LABELS={'full-time':'Full-time','part-time':'Part-time',contract:'Contract',temporary:'Temporary'};
+    const STATUS_LABELS={active:'Active','on-leave':'On leave',inactive:'Inactive'};
+    function validStartDate(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(value)||value<'0001-01-01'||value>'9999-12-31')return false;const date=new Date(value+'T12:00:00Z');return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value;}
+    function validateProfile(data){
+      const errors={};
+      for(const [field,max] of Object.entries(TEXT_LIMITS))if(typeof data[field]!=='string'||data[field].length>max)errors[field]='Use '+max+' characters or fewer.';
+      if(typeof data.fullName!=='string'||!data.fullName.trim())errors.fullName='Enter the employee’s full name.';
+      if(data.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))errors.email='Enter a valid email address or leave it blank.';
+      if(typeof data.startDate!=='string'||(data.startDate&&!validStartDate(data.startDate)))errors.startDate='Choose a valid employment start date.';
+      if(!Object.hasOwn(TYPE_LABELS,data.employmentType))errors.employmentType='Choose an employment type.';
+      if(!Object.hasOwn(STATUS_LABELS,data.status))errors.status='Choose an employment status.';
+      if(typeof data.rate!=='string'||(data.rate.trim()!==''&&(!Number.isFinite(Number(data.rate))||Number(data.rate)<0)))errors.rate='Enter an hourly rate of $0 or more, or leave it blank.';
+      if(![7,15,30,'month'].includes(data.cycleDays))errors.cycleDays='Choose 7 days, 15 days, or a month cycle.';
+      if(!['normal','overtime'].includes(data.mode))errors.mode='Choose a calculation mode.';
+      return errors;
+    }
+    function validStoredProfile(profile){return profile&&typeof profile.id==='string'&&profile.id.length>0&&profile.id.length<=100&&typeof profile.createdAt==='string'&&Number.isFinite(Date.parse(profile.createdAt))&&typeof profile.updatedAt==='string'&&Number.isFinite(Date.parse(profile.updatedAt))&&Object.keys(validateProfile(profile)).length===0;}
+        function readStoredProfile(){const raw=localStorage.getItem(PROFILE_KEY);if(raw===null)return null;const data=JSON.parse(raw);if(!data||data.version!==1||!validStoredProfile(data.profile))throw new Error('Invalid profile');return data.profile;}
+
+let savedEmployeeProfile=null,currentSheetEmployee=null,employeeProfileError=false;
+function loadEmployeeProfile(){
+  try{savedEmployeeProfile=readStoredProfile();employeeProfileError=false;return true;}
+  catch{savedEmployeeProfile=null;employeeProfileError=true;return false;}
+}
+function employeeSnapshot(profile){return profile?{profileId:profile.id,fullName:profile.fullName,employeeId:profile.employeeId,company:profile.company}:null;}
+function validEmployeeSnapshot(employee){
+  return employee===undefined||employee===null||(employee&&typeof employee==='object'&&['profileId','fullName','employeeId','company'].every(field=>typeof employee[field]==='string')&&employee.profileId.length>0&&employee.profileId.length<=100&&employee.fullName.trim().length>0&&employee.fullName.length<=100&&employee.employeeId.length<=40&&employee.company.length<=100);
+}
+function renderEmployeeStrip(){
+  const employee=currentSheetEmployee;
+  $('employee-name').textContent=employee?employee.fullName:savedEmployeeProfile?'Unassigned timesheet':'Create your employee profile';
+  $('employee-avatar').textContent=employee?employee.fullName.split(/\s+/).filter(Boolean).slice(0,2).map(word=>Array.from(word)[0]).join('').toUpperCase():'ET';
+  $('employee-meta').textContent=employee?([employee.employeeId?'Employee ID '+employee.employeeId:'',employee.company].filter(Boolean).join(' · ')||'Employee profile attached'):'Keep your name and pay preferences together.';
+  $('employee-edit').textContent=savedEmployeeProfile?'Edit profile':'Create profile';
+  $('use-profile').disabled=!savedEmployeeProfile;
+  $('employee-help').classList.toggle('is-error',employeeProfileError);
+  $('employee-help').textContent=employeeProfileError?'The saved employee profile could not be read. Your timesheet still works.':savedEmployeeProfile?'Saved profile: '+savedEmployeeProfile.fullName+' · '+(savedEmployeeProfile.rate.trim()===''?'Hourly rate not set':money(Number(savedEmployeeProfile.rate))+' / hr')+' · '+cycleDescription(preferredCycle(savedEmployeeProfile.cycleDays))+'. Use profile defaults to apply its preferences.':'Save a profile to connect it to your timesheets.';
+}
+function applyEmployeeDefaults(){
+  if(!loadEmployeeProfile()||!savedEmployeeProfile){renderEmployeeStrip();announceRecord('Save an employee profile before applying its defaults.',true);return false;}
+  const profile=savedEmployeeProfile;
+  const preferred=preferredCycle(profile.cycleDays);
+  if(preferred!==cycle&&!changeCycle(preferred))return false;
+  if(profile.rate.trim()!=='')$('hourly-rate').value=profile.rate;currentSheetEmployee=employeeSnapshot(profile);setMode(profile.mode);
+  renderEmployeeStrip();refreshRecordState();announceRecord('Applied '+profile.fullName+'’s profile defaults. Save the record to keep these timesheet changes.');return true;
+}
+loadEmployeeProfile();currentSheetEmployee=employeeSnapshot(savedEmployeeProfile);
+
+// Record snapshots keep raw inputs, including blank breaks and manual OT.
+const RECORDS_KEY = 'easytimeRecordsV1';
+let savedRecords = [], recordsReadable = true, activeRecordId = null;
+let cleanSheet = '';
+function sheetValues() {
+  return { periodStart: $('period-start').value, periodDays:DAYS, cycle, rate: $('hourly-rate').value, mode, employee:currentSheetEmployee?{...currentSheetEmployee}:null, entries: readEntries() };
+}
+function sheetSignature() { return JSON.stringify(sheetValues()); }
+function recordKey(start,days,kind=cycle) { return kind==='month'?'period:month:'+start.slice(0,7):'period:'+days+':'+start; }
+function currentRecordKey() { return recordKey($('period-start').value,DAYS); }
+function periodTitle(start,days=DAYS) {
+  return dateFormat(dayDate(start,0),{month:'short',day:'numeric',year:'numeric'})+' – '+dateFormat(dayDate(start,days-1),{month:'short',day:'numeric',year:'numeric'});
+}
+function announceRecord(message, error=false) {
+  $('record-status').textContent=message;
+  $('record-status').classList.toggle('is-error',error);
+}
+// CSV uses the same calculation as the page and leaves saved records untouched.
+function csvCell(value) {
+  let text=value===null||value===undefined?'':String(value);
+  // Keep employee text from being interpreted as an Excel formula.
+  if(typeof value!=='number' && /^[\s\u0000-\u001f]*[=+\-@]/.test(text))text="'"+text;
+  return /[",\r\n]/.test(text)?'"'+text.replace(/"/g,'""')+'"':text;
+}
+function createTimesheetCSV(values) {
+  const result=calculateSheet(values.entries,values.mode,values.rate);
+  if(!validDate(values.periodStart,values.periodDays)||!result.rateValid||result.invalidDays || (values.cycle==='month'&&(values.periodStart!==monthStart(values.periodStart)||values.periodDays!==daysInMonth(values.periodStart))))
+    throw new Error('Fix the highlighted date, rate, or shift entries before downloading.');
+  if(!result.completed)throw new Error('Enter at least one complete shift before downloading. Days off can stay blank.');
+  const rate=Number(values.rate);
+  if(!['regularPay','overtimePay','pay'].every(key=>Number.isFinite(result[key])) || (values.mode==='overtime'&&!Number.isFinite(rate*1.5)))
+    throw new Error('Enter a smaller hourly rate so the pay total can be downloaded.');
+  const columns=['Day','Date','Start time (24h)','End time (24h)','Overnight','Break (min)','Manual OT entered (hrs)','Worked (hrs)','Regular (hrs)','Overtime (hrs)','Status'];
+  const table=[],add=(...cells)=>table.push(cells.concat(Array(Math.max(0,columns.length-cells.length)).fill('')));
+  const hours=minutes=>Number((minutes/60).toFixed(6));
+  const periodEnd=dayDate(values.periodStart,values.periodDays-1).toISOString().slice(0,10);
+  add('EasyTime timesheet');
+  add('Pay period starts',values.periodStart);add('Pay period ends',periodEnd);add('Pay cycle',cycleDescription(values.cycle??values.periodDays));add('Pay cycle (days)',values.periodDays);
+  add('Calculation mode',values.mode==='overtime'?'Overtime Mode':'Normal Mode');
+  add('Employee name',values.employee?.fullName||'');add('Employee ID',values.employee?.employeeId||'');add('Company',values.employee?.company||'');
+  add('Hourly rate (USD)',rate);add('Overtime hourly rate (USD)',values.mode==='overtime'?rate*1.5:'Not applied');
+  add('Overtime rule',values.mode==='overtime'?'After 40 hours per 7-day block from the period start, paid at 1.5x. Manual OT replaces that day\'s automatic overtime.':'All worked hours at the regular hourly rate.');
+  add('Break rule','Blank breaks deduct 0 minutes. Entered breaks are deducted from the shift.');
+  add('Time format','24-hour HH:mm. An overnight shift ends the following day.');
+  add('Hours precision','Hours are exported to 6 decimal places; pay uses the full calculation.');
+  add();add(...columns);
+  values.entries.forEach((entry,index)=>{
+    const row=result.rows[index];
+    add(index+1,dayDate(values.periodStart,index).toISOString().slice(0,10),entry.start,entry.end,row.complete?(row.overnight?'Yes':'No'):'',
+      entry.breakMinutes===''?'':Number(entry.breakMinutes),values.mode==='overtime'&&entry.manualOT!==''?Number(entry.manualOT):'',
+      row.complete?hours(row.minutes):'',row.complete?hours(row.regular):'',row.complete?hours(row.overtime):'',row.complete?'Complete':'Not entered');
+  });
+  add('TOTAL','','','','','','',Number(result.total.toFixed(6)),Number(result.regular.toFixed(6)),Number(result.overtime.toFixed(6)),'');
+  add();add('Days entered',result.completed);add('Regular pay (USD)',result.regularPay.toFixed(2));
+  add('Overtime pay (USD)',result.overtimePay.toFixed(2));add('Estimated gross pay (USD)',result.pay.toFixed(2));
+  add('Pay note','Estimated gross pay before taxes and deductions.');
+  return {csv:'\uFEFF'+table.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n',filename:'EasyTime_'+(values.cycle==='month'?values.periodStart.slice(0,7)+'_month':values.periodStart+'_'+values.periodDays+'-days')+'.csv',completed:result.completed};
+}
+function downloadTimesheetCSV() {
+  calculate();
+  let exportFile;
+  try { exportFile=createTimesheetCSV(sheetValues()); }
+  catch(error) {
+    announceRecord(error.message,true);
+    const invalid=document.querySelector('input[aria-invalid="true"],select[aria-invalid="true"]');
+    if(invalid)invalid.focus();else if(!calculateSheet(readEntries(),mode,$('hourly-rate').value).completed)focusTimePart('day-1-start','hours');else $('hourly-rate').focus();
+    return false;
+  }
+  let url,link;
+  try {
+    url=URL.createObjectURL(new Blob([exportFile.csv],{type:'text/csv;charset=utf-8'}));
+    link=document.createElement('a');link.href=url;link.download=exportFile.filename;link.hidden=true;
+    document.body.appendChild(link);link.click();
+    announceRecord('CSV download started. Open it in Excel or Google Sheets. '+(sheetSignature()===cleanSheet?'':'Choose '+$('save-record-label').textContent+' to keep these changes on this device.'));
+    return true;
+  } catch { announceRecord('The CSV could not be downloaded. Try again in a browser that supports file downloads.',true);return false; }
+  finally { if(link)link.remove();if(url)setTimeout(()=>URL.revokeObjectURL(url),1000); }
+}
+function isSavedRecord(record) {
+  if(!record || typeof record!=='object')return false;
+  const kind=record.cycle??record.periodDays,expectedDays=kind==='month'?daysInMonth(record.periodStart):kind;
+  if(record.calculationVersion!==1 || !CYCLE_OPTIONS.includes(kind) || record.periodDays!==expectedDays || (kind==='month'&&record.periodStart!==monthStart(record.periodStart)) || !validDate(record.periodStart,record.periodDays) || record.id!==recordKey(record.periodStart,record.periodDays,kind) || typeof record.rate!=='string' || !['normal','overtime'].includes(record.mode) || !Array.isArray(record.entries) || record.entries.length!==record.periodDays) return false;
+  if(!validEmployeeSnapshot(record.employee))return false;
+  if(!record.entries.every(entry=>entry && fields.every(([field])=>typeof entry[field]==='string' && entry[field].length<=100))) return false;
+  if(typeof record.savedAt!=='string' || !Number.isFinite(Date.parse(record.savedAt)) || typeof record.createdAt!=='string' || !Number.isFinite(Date.parse(record.createdAt))) return false;
+  const result=calculateSheet(record.entries,record.mode,record.rate);
+  return result.rateValid && result.invalidDays===0 && result.completed>0 && record.totals && ['total','regular','overtime','regularPay','overtimePay','pay','completed'].every(key=>Number.isFinite(record.totals[key]) && Number.isFinite(result[key]));
+}
+function loadSavedRecords() {
+  try {
+    const raw=localStorage.getItem(RECORDS_KEY);
+    if(raw===null) { savedRecords=[]; return; }
+    const data=JSON.parse(raw);
+    if(!data || ![1,2].includes(data.version) || !Array.isArray(data.records)) throw new Error('Invalid records');
+    // Read legacy 15-day records without overwriting their stored data on load.
+    const normalized=data.records.map(record=>{
+      if(data.version!==1)return record;
+      if(!record || record.id!=='period:'+record.periodStart || record.periodDays!==undefined || !Array.isArray(record.entries) || record.entries.length!==15)throw new Error('Invalid legacy record');
+      return {...record,periodDays:15,id:recordKey(record.periodStart,15,15)};
+    });
+    if(!normalized.every(isSavedRecord) || new Set(normalized.map(record=>record.id)).size!==normalized.length)throw new Error('Invalid records');
+    savedRecords=normalized;
+  } catch {
+    recordsReadable=false;
+    announceRecord('Saved records could not be read. Enable browser storage or recover its saved data before saving. Existing data has not been replaced.',true);
+  }
+}
+function persistRecords(next) {
+  try {
+    localStorage.setItem(RECORDS_KEY,JSON.stringify({version:2,records:next}));
+    savedRecords=next;
+    return true;
+  } catch {
+    announceRecord('The record could not be saved. Browser storage may be blocked or full. Your entries are still here; keep the page open.',true);
+    return false;
+  }
+}
+function refreshRecordState() {
+  const sameRecord=activeRecordId===currentRecordKey();
+  $('save-record-label').textContent=sameRecord?'Update record':'Save record';
+  $('save-record').disabled=!recordsReadable;
+  $('record-hint').textContent=sameRecord?(sheetSignature()===cleanSheet?'You are viewing a saved period. Make changes, then update its record.':'This saved period has changes. Update its record to keep them.'):'Save this period, then start a fresh timesheet. Your saved records stay below.';
+}
+function renderSavedRecords() {
+  const list=$('saved-list');
+  list.replaceChildren();
+  $('saved-count').textContent=String(savedRecords.length);
+  if(!savedRecords.length) {
+    const empty=document.createElement('li');empty.className='saved-empty';
+    empty.textContent=recordsReadable?'No records yet. Enter your shifts and choose Save record. Blank days can stay empty.':'Saved records are unavailable in this browser.';
+    list.appendChild(empty);return;
+  }
+  [...savedRecords].sort((a,b)=>b.periodStart.localeCompare(a.periodStart)).forEach(record=>{
+    const result=calculateSheet(record.entries,record.mode,record.rate);
+    const item=document.createElement('li');item.className='saved-item';
+    const info=document.createElement('div'),title=document.createElement('h3');title.textContent=periodTitle(record.periodStart,record.periodDays);
+    const summary=document.createElement('p');summary.className='record-summary';
+    summary.textContent=cycleDescription(record.cycle??record.periodDays)+(record.cycle==='month'?' ('+record.periodDays+' days)':'')+' · '+result.total.toFixed(2)+' hrs · '+money(result.pay)+' · '+(record.mode==='normal'?'Normal Mode':'Overtime Mode');
+    const meta=document.createElement('p');
+    meta.textContent=result.completed+' of '+record.periodDays+' days entered · Rate '+money(Number(record.rate))+' / hr · Saved '+new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(record.savedAt));
+    info.append(title);
+    if(record.employee){const employee=document.createElement('p');employee.className='record-employee';employee.textContent=record.employee.fullName+(record.employee.employeeId?' · Employee ID '+record.employee.employeeId:'');info.append(employee);}
+    info.append(summary,meta);
+    const actions=document.createElement('div');actions.className='saved-item-actions';
+    for(const [action,label] of [['open','Open'],['delete','Delete']]) {
+      const button=document.createElement('button');button.type='button';button.className='record-button'+(action==='delete'?' danger':'');
+      button.textContent=label;button.dataset.recordId=record.id;button.dataset.action=action;
+      button.setAttribute('aria-label',label+' record for '+periodTitle(record.periodStart,record.periodDays));actions.appendChild(button);
+    }
+    item.append(info,actions);list.appendChild(item);
+  });
+}
+function saveRecord() {
+  if(!recordsReadable) return;
+  loadSavedRecords();if(!recordsReadable){renderSavedRecords();refreshRecordState();return;}
+  const result=calculate(),values=sheetValues();
+  if(!validDate(values.periodStart) || !result.rateValid || result.invalidDays) {
+    announceRecord('Fix the highlighted date, rate, or shift entries before saving.',true);
+    const invalid=document.querySelector('input[aria-invalid="true"]');if(invalid)invalid.focus();return;
+  }
+  if(!result.completed) { announceRecord('Enter at least one complete shift before saving. Days off can stay blank.',true);focusTimePart('day-1-start','hours');return; }
+  if(!Number.isFinite(result.pay)) { announceRecord('Enter a smaller hourly rate so the pay total can be saved.',true);$('hourly-rate').focus();return; }
+  const id=recordKey(values.periodStart,values.periodDays), previous=savedRecords.find(record=>record.id===id);
+  if(previous && activeRecordId!==id && !window.confirm('Replace the saved record for '+periodTitle(values.periodStart)+' with the entries currently shown?')) return;
+  const now=new Date().toISOString();
+  const record={id,...values,calculationVersion:1,createdAt:previous?previous.createdAt:now,savedAt:now,totals:Object.fromEntries(['total','regular','overtime','regularPay','overtimePay','pay','completed'].map(key=>[key,result[key]]))};
+  const next=savedRecords.filter(item=>item.id!==id).concat(record);
+  if(!persistRecords(next))return;
+  activeRecordId=id;cleanSheet=sheetSignature();renderSavedRecords();refreshRecordState();
+  newPeriod({afterSave:true});
+  announceRecord((previous?'Updated':'Saved')+' '+periodTitle(values.periodStart,values.periodDays)+' on this device. A fresh timesheet is ready; your saved records are below.');
+}
+function canLeaveSheet() {
+  return sheetSignature()===cleanSheet || window.confirm('You have unsaved changes. Discard them and continue?');
+}
+function fillEntries(entries) {
+  rows.forEach((row,index)=>fields.forEach(([field])=>{const input=row.querySelector('[data-field="'+field+'"]');input.value=entries[index][field];if(field==='start'||field==='end')fillTimeControl(input.id,input.value);}));
+}
+function openRecord(id) {
+  const record=savedRecords.find(item=>item.id===id);if(!record || !canLeaveSheet())return;
+  $('period-start').value=record.periodStart;$('hourly-rate').value=record.rate;applyCycle(record.cycle??record.periodDays,record.entries);activeRecordId=id;currentSheetEmployee=record.employee?{...record.employee}:null;
+  setMode(record.mode);cleanSheet=sheetSignature();refreshRecordState();renderEmployeeStrip();
+  announceRecord('Opened '+periodTitle(record.periodStart,record.periodDays)+'. Changes need Update record to be saved.');
+  $('save-record').focus();$('record-heading').scrollIntoView({block:'nearest',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+}
+function deleteRecord(id) {
+  loadSavedRecords();if(!recordsReadable){renderSavedRecords();refreshRecordState();return;}
+  const record=savedRecords.find(item=>item.id===id);if(!record || !window.confirm('Delete the saved record for '+periodTitle(record.periodStart,record.periodDays)+'? This cannot be undone.'))return;
+  if(!persistRecords(savedRecords.filter(item=>item.id!==id)))return;
+  if(activeRecordId===id)activeRecordId=null;
+  renderSavedRecords();refreshRecordState();announceRecord('Deleted the saved record. The current entries have not changed.');$('save-record').focus();
+}
+function newPeriod({afterSave=false}={}) {
+  if(!afterSave&&!canLeaveSheet())return;
+  const nextCycle=cycle===30?'month':cycle,base=nextCycle==='month'?monthStart($('period-start').value):$('period-start').value;
+  const advance=start=>{const next=dayDate(start,nextCycle==='month'?daysInMonth(start):DAYS);return next?next.toISOString().slice(0,10):'';};
+  let value=advance(base);
+  if(afterSave)while(validDate(value,nextCycle==='month'?daysInMonth(value):DAYS)&&savedRecords.some(record=>{const end=dayDate(value,(nextCycle==='month'?daysInMonth(value):DAYS)-1).toISOString().slice(0,10),savedEnd=dayDate(record.periodStart,record.periodDays-1).toISOString().slice(0,10);return record.periodStart<=end&&savedEnd>=value;}))value=advance(value);
+  $('period-start').value=validDate(value,nextCycle==='month'?daysInMonth(value):DAYS)?value:'';
+  applyCycle(nextCycle);activeRecordId=null;loadEmployeeProfile();currentSheetEmployee=employeeSnapshot(savedEmployeeProfile);renderEmployeeStrip();
+  calculate();cleanSheet=sheetSignature();refreshRecordState();
+  announceRecord(cycle==='month'?'The next month is ready. Your saved records are below.':'A fresh '+DAYS+'-day period is ready. Your saved records are below.');
+  if(afterSave)focusTimePart('day-1-start','hours');else $(cycle==='month'?'period-month':'period-start').focus();
+}
+function onSheetChange() { calculate();refreshRecordState();announceRecord('Changes are not saved yet. Choose '+(activeRecordId===currentRecordKey()?'Update record.':'Save record.')); }
+
+function validTimePart(part,value,partial=false) {
+  if(value==='')return partial;
+  if(!/^\d{1,2}$/.test(value))return false;
+  const number=Number(value);
+  return part==='hours'?(number>=1&&number<=12 || partial&&value==='0'):number>=0&&number<=59;
+}
+function timeParts(id) { return {hours:$(id+'-hours'),minutes:$(id+'-minutes'),meridiem:$(id+'-meridiem')}; }
+function fillTimeControl(id,value) {
+  const parts=timeParts(id),total=timeMinutes(value);
+  let hours='',minutes='',meridiem='';
+  if(total!==null){const hour=Math.floor(total/60);hours=String(hour%12||12).padStart(2,'0');minutes=String(total%60).padStart(2,'0');meridiem=hour<12?'AM':'PM';}
+  else {const pending=/^(\d{0,2}):(\d{0,2}) (AM|PM)?$/.exec(value);if(pending){hours=pending[1];minutes=pending[2];meridiem=pending[3]||'';}}
+  for(const [name,value] of Object.entries({hours,minutes,meridiem})){parts[name].value=value;parts[name].dataset.lastValidPart=value;}
+}
+function syncTimeControl(id) {
+  const parts=timeParts(id),hours=parts.hours.value,minutes=parts.minutes.value,meridiem=parts.meridiem.value;
+  let value=hours+':'+minutes+' '+meridiem;
+  if(!hours&&!minutes&&!meridiem)value='';
+  else if(validTimePart('hours',hours)&&validTimePart('minutes',minutes)&&['AM','PM'].includes(meridiem))value=String(Number(hours)%12+(meridiem==='PM'?12:0)).padStart(2,'0')+':'+String(Number(minutes)).padStart(2,'0');
+  $(id).value=value;
+  return timeMinutes(value)!==null;
+}
+function focusTimePart(id,part) {
+  const input=$(id+'-'+part);if(!input)return;
+  input.focus();if(part!=='meridiem')input.select();
+}
+function advanceTimeControl(id) {
+  if(timeMinutes($(id).value)===null)return;
+  if(id.endsWith('-start'))focusTimePart(id.replace(/-start$/,'-end'),'hours');
+  else if(id.endsWith('-end')){const next=$(id.replace(/-end$/,'-breakMinutes'));if(next)next.focus();}
+}
+function onTimePartInput(event) {
+  const input=event.target,part=input.dataset.timePart,id=input.dataset.timeId;
+  if(!part){onSheetChange();return;}
+  if(part!=='meridiem'){
+    if(!validTimePart(part,input.value,true))input.value=input.dataset.lastValidPart||'';
+    else input.dataset.lastValidPart=input.value;
+  }
+  const complete=syncTimeControl(id);onSheetChange();
+  if(document.activeElement!==input||event.isComposing)return;
+  if(part==='meridiem'){if(complete)advanceTimeControl(id);}
+  else if(input.value.length===2&&validTimePart(part,input.value)&&!String(event.inputType||'').startsWith('delete'))focusTimePart(id,part==='hours'?'minutes':'meridiem');
+}
+function onTimeKeyDown(event) {
+  const input=event.target,part=input.dataset.timePart,id=input.dataset.timeId;
+  if(!part||event.isComposing||event.altKey||event.ctrlKey||event.metaKey)return;
+  if(part==='meridiem'&&/^[ap]$/i.test(event.key)){
+    event.preventDefault();input.value=event.key.toLowerCase()==='a'?'AM':'PM';
+    syncTimeControl(id);onSheetChange();advanceTimeControl(id);return;
+  }
+  if(event.key==='Enter'||(event.key===':'&&part==='hours')){
+    event.preventDefault();
+    if(part==='meridiem'){syncTimeControl(id);advanceTimeControl(id);}
+    else if(validTimePart(part,input.value))focusTimePart(id,part==='hours'?'minutes':'meridiem');
+  }
+}
+function onTimeBeforeInput(event) {
+  const input=event.target,part=input.dataset.timePart;
+  if(!part||part==='meridiem'||event.isComposing||event.data===null||event.data===undefined)return;
+  const from=input.selectionStart??input.value.length,to=input.selectionEnd??from;
+  const proposed=input.value.slice(0,from)+event.data+input.value.slice(to);
+  if(!validTimePart(part,proposed,true))event.preventDefault();
+}
+function onTimePaste(event) {
+  const input=event.target,id=input.dataset.timeId,part=input.dataset.timePart;
+  if(!part)return;
+  const text=event.clipboardData.getData('text').trim();
+  let value=text;
+  const match=/^(0?[1-9]|1[0-2]):([0-5]\d)\s*(AM|PM)$/i.exec(text);
+  if(match)value=String(Number(match[1])%12+(match[3].toUpperCase()==='PM'?12:0)).padStart(2,'0')+':'+match[2];
+  if(timeMinutes(value)!==null){event.preventDefault();$(id).value=value;fillTimeControl(id,value);onSheetChange();advanceTimeControl(id);}
+  else if(part==='meridiem'||!validTimePart(part,text,true))event.preventDefault();
+}
+
+function updateCycleLabels() {
+  const monthly=cycle==='month';
+  $('cycle-eyebrow').textContent=monthly?'YOUR MONTHLY TIMESHEET':'YOUR '+DAYS+'-DAY TIMESHEET';
+  $('record-heading').textContent=monthly?'Keep your monthly record':'Keep your '+DAYS+'-day record';
+  $('new-period').textContent=monthly?'Next month':cycle===30?'New month cycle':'New '+DAYS+'-day period';
+  $('cycle-footer').textContent=(monthly?'Month cycle · ':'')+DAYS+' days · 1 clear picture';
+  $('cycle-help').textContent=monthly?'From the first through the last day of your chosen month.':cycle===30?'This saved record keeps its original 30-day period.':'Consecutive days, starting on your chosen date.';
+  $('period-start-label').textContent=monthly?'Pay month':'Pay period starts';$('period-start-label').setAttribute('for',monthly?'period-month':'period-start');
+  $('period-start').hidden=monthly;$('period-month').hidden=!monthly;
+  $('period-month').value=validDate($('period-start').value,1)?$('period-start').value.slice(0,7):'';
+  $('legacy-cycle').hidden=cycle!==30;
+  const blocks=[];
+  for(let start=1;start<=DAYS;start+=7){const end=Math.min(start+6,DAYS);blocks.push(start===end?String(start):start+'–'+end);}
+  $('week-block-note').textContent='7-day blocks: days '+blocks.join(', ')+'.';
+  const max=new Date('9999-12-31T12:00:00Z');max.setUTCDate(max.getUTCDate()-DAYS+1);$('period-start').max=max.toISOString().slice(0,10);
+}
+function applyCycle(next,entries=null,save=true) {
+  if(!CYCLE_OPTIONS.includes(next))return false;
+  cycle=next;
+  if(cycle==='month')$('period-start').value=monthStart($('period-start').value);
+  DAYS=cycle==='month'?daysInMonth($('period-start').value):cycle;
+  $('cycle-days').value=String(cycle);renderRows(entries??emptyEntries());updateCycleLabels();
+  if(save){try{localStorage.setItem('easytimeCycleDays',String(cycle===30?'month':cycle));}catch{$('storage-note').textContent='Your browser could not save preferences. The calculator still works.';}}
+  return true;
+}
+function changeCycle(next) {
+  if(!CYCLE_OPTIONS.includes(next) || next===cycle){$('cycle-days').value=String(cycle);return false;}
+  const current=readEntries(),oldStart=$('period-start').value,newStart=next==='month'?monthStart(oldStart):oldStart;
+  const count=next==='month'?daysInMonth(newStart):next,rebased=emptyEntries(count);
+  const offset=validDate(oldStart,1)&&validDate(newStart,1)?Math.round((Date.parse(oldStart+'T12:00:00Z')-Date.parse(newStart+'T12:00:00Z'))/86400000):0;
+  let dropped=false;
+  current.forEach((entry,index)=>{const day=index+offset;if(day>=0&&day<count)rebased[day]=entry;else if(fields.some(([field])=>entry[field]!==''))dropped=true;});
+  if(dropped&&!window.confirm('Changing the pay cycle removes entered shifts outside the new period from this sheet. Your saved records remain. Continue?')) {
+    $('cycle-days').value=String(cycle);return false;
+  }
+  $('period-start').value=newStart;applyCycle(next,rebased);calculate();refreshRecordState();
+  announceRecord('Switched to '+cycleDescription(cycle)+'. Save this period to keep its record.');return true;
+}
+function changeMonth() {
+  if(cycle!=='month')return false;
+  const value=$('period-month').value,oldStart=$('period-start').value;
+  const start=/^\d{4}-(?:0[1-9]|1[0-2])$/.test(value)&&validDate(value+'-01',1)?value+'-01':'';
+  const current=readEntries(),count=start?daysInMonth(start):DAYS;
+  if(count<DAYS&&current.slice(count).some(entry=>fields.some(([field])=>entry[field]!==''))&&!window.confirm('The chosen month has '+count+' days. Remove entered shifts after day '+count+' from this sheet? Your saved records remain.')) {
+    $('period-month').value=oldStart.slice(0,7);return false;
+  }
+  $('period-start').value=start;
+  if(start)applyCycle('month',current);
+  onSheetChange();return true;
+}
+$('cycle-days').addEventListener('change',()=>changeCycle($('cycle-days').value==='month'?'month':Number($('cycle-days').value)));
+$('period-month').addEventListener('input',changeMonth);
+
+$('timesheet-body').addEventListener('focusin',event=>{const input=event.target,id=input.dataset.timeId;if(id&&event.relatedTarget?.dataset.timeId!==id)focusTimePart(id,'hours');});
+$('timesheet-body').addEventListener('pointerdown',event=>{if(event.button!==0)return;const group=event.target.closest('[data-time-group]');if(group&&document.activeElement?.dataset.timeId!==group.dataset.timeId){event.preventDefault();focusTimePart(group.dataset.timeId,'hours');}});
+$('timesheet-body').addEventListener('beforeinput',onTimeBeforeInput);
+$('timesheet-body').addEventListener('input',onTimePartInput);
+$('timesheet-body').addEventListener('change',event=>{if(event.target.dataset.timePart==='meridiem')onTimePartInput(event);});
+$('timesheet-body').addEventListener('compositionend',onTimePartInput);
+$('timesheet-body').addEventListener('keydown',onTimeKeyDown);
+$('timesheet-body').addEventListener('paste',onTimePaste);
+$('timesheet-body').addEventListener('focusout',event=>{const input=event.target,part=input.dataset.timePart;if(part&&part!=='meridiem'&&validTimePart(part,input.value)){input.value=input.value.padStart(2,'0');input.dataset.lastValidPart=input.value;syncTimeControl(input.dataset.timeId);}});
+$('hourly-rate').addEventListener('input',onSheetChange);
+$('period-start').addEventListener('input',onSheetChange);
+$('save-record').addEventListener('click',saveRecord);
+$('download-csv').addEventListener('click',downloadTimesheetCSV);
+$('download-csv-top').addEventListener('click',downloadTimesheetCSV);
+$('use-profile').addEventListener('click',applyEmployeeDefaults);
+$('new-period').addEventListener('click',newPeriod);
+$('saved-list').addEventListener('click',event=>{const button=event.target.closest('button[data-record-id]');if(!button)return;if(button.dataset.action==='open')openRecord(button.dataset.recordId);else if(button.dataset.action==='delete')deleteRecord(button.dataset.recordId);});
+for(const value of ['normal','overtime']) {
+  const button=$(value+'-mode');
+  button.addEventListener('click',()=>{setMode(value);refreshRecordState();announceRecord('Changes are not saved yet. Save this period to keep the mode with it.');});
+  button.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const next=event.key==='Home'?'normal':event.key==='End'?'overtime':mode==='normal'?'overtime':'normal';setMode(next);refreshRecordState();announceRecord('Changes are not saved yet. Save this period to keep the mode with it.');$(next+'-mode').focus();}});
+}
+window.addEventListener('beforeunload',event=>{if(sheetSignature()!==cleanSheet){event.preventDefault();event.returnValue='';}});
+// Update the archive safely if another tab saves. Keep the editor's current entries.
+window.addEventListener('storage',event=>{if(event.key===RECORDS_KEY || event.key===null){recordsReadable=true;loadSavedRecords();renderSavedRecords();refreshRecordState();if(recordsReadable)announceRecord('Saved records changed in another tab. Your current entries are unchanged.');}});
+window.addEventListener('storage',event=>{if(event.key===PROFILE_KEY||event.key===null){loadEmployeeProfile();renderEmployeeStrip();}});
+loadSavedRecords();renderSavedRecords();renderRows();setMode(mode,false);cleanSheet=sheetSignature();refreshRecordState();renderEmployeeStrip();
+
+</script></body></html>
